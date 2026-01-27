@@ -246,12 +246,13 @@ header h1 {
 }
 
 .sources-content a {
-    color: var(--primary-color);
-    text-decoration: none;
+    color: #5eb5f7;
+    text-decoration: underline;
+    font-weight: 500;
 }
 
 .sources-content a:hover {
-    text-decoration: underline;
+    color: #8acbff;
 }
 
 /* Markdown formatting styles */
