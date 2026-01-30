@@ -292,3 +292,206 @@ class TestAIGeneratorSystemPrompt:
 
         assert "Brief" in system_content or "brief" in system_content
         assert "Educational" in system_content or "educational" in system_content
+
+    def test_system_prompt_allows_multi_tool_usage(self, mock_anthropic_client, mock_anthropic_response):
+        """System prompt includes multi-tool usage guidance."""
+        mock_anthropic_client.messages.create.return_value = mock_anthropic_response()
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            generator.generate_response(query="test")
+
+        call_args = mock_anthropic_client.messages.create.call_args
+        system_content = call_args.kwargs.get("system", "")
+
+        assert "2 tool calls" in system_content
+        assert "Multi-Tool Usage" in system_content
+
+
+class TestSequentialToolExecution:
+    """Tests for sequential tool calling (up to 2 rounds)."""
+
+    def test_two_sequential_tool_calls(self, mock_anthropic_client, mock_anthropic_response, mock_tool_manager):
+        """Supports two rounds of tool calls with 3 API calls total."""
+        # Round 1: Claude requests first search
+        round1_response = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t1", "name": "get_course_outline", "input": {"course_name": "AI"}}
+        )
+        # Round 2: Claude requests second search after seeing first results
+        round2_response = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t2", "name": "search_course_content", "input": {"query": "lesson 2"}}
+        )
+        # Final: Claude provides answer
+        final_response = mock_anthropic_response(text="Based on both searches...")
+
+        mock_anthropic_client.messages.create.side_effect = [
+            round1_response, round2_response, final_response
+        ]
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            result = generator.generate_response(
+                query="What is in lesson 2 of AI course?",
+                tools=[{"name": "search_course_content"}, {"name": "get_course_outline"}],
+                tool_manager=mock_tool_manager
+            )
+
+        # Verify 3 API calls (initial + 2 tool rounds)
+        assert mock_anthropic_client.messages.create.call_count == 3
+        # Verify both tools were executed
+        assert mock_tool_manager.execute_tool.call_count == 2
+        assert result == "Based on both searches..."
+
+    def test_stops_after_max_rounds(self, mock_anthropic_client, mock_anthropic_response, mock_tool_manager):
+        """Terminates after max rounds even if Claude requests more tools."""
+        # Claude keeps requesting tools (would be 3 rounds if allowed)
+        tool_response1 = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t1", "name": "search_course_content", "input": {"query": "test1"}}
+        )
+        tool_response2 = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t2", "name": "search_course_content", "input": {"query": "test2"}}
+        )
+        # Third response - tools not included so Claude must respond with text
+        final_response = mock_anthropic_response(text="Final after max rounds")
+
+        mock_anthropic_client.messages.create.side_effect = [
+            tool_response1, tool_response2, final_response
+        ]
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            result = generator.generate_response(
+                query="test",
+                tools=[{"name": "search_course_content"}],
+                tool_manager=mock_tool_manager
+            )
+
+        # 2 tool executions (max rounds)
+        assert mock_tool_manager.execute_tool.call_count == 2
+        assert result == "Final after max rounds"
+
+    def test_stops_when_no_tool_use(self, mock_anthropic_client, mock_anthropic_response, mock_tool_manager):
+        """Stops early when Claude responds without requesting tools."""
+        # First call uses tool
+        tool_response = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t1", "name": "search_course_content", "input": {"query": "test"}}
+        )
+        # Second call - Claude has enough info, responds directly
+        final_response = mock_anthropic_response(
+            text="I found the answer.",
+            stop_reason="end_turn"
+        )
+
+        mock_anthropic_client.messages.create.side_effect = [tool_response, final_response]
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            result = generator.generate_response(
+                query="test",
+                tools=[{"name": "search_course_content"}],
+                tool_manager=mock_tool_manager
+            )
+
+        # Only 1 tool execution, then Claude stopped
+        assert mock_tool_manager.execute_tool.call_count == 1
+        assert mock_anthropic_client.messages.create.call_count == 2
+        assert result == "I found the answer."
+
+    def test_tools_included_in_second_round(self, mock_anthropic_client, mock_anthropic_response, mock_tool_manager):
+        """Verifies tools are included in the second API call."""
+        tool_response = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t1", "name": "search_course_content", "input": {"query": "test"}}
+        )
+        final_response = mock_anthropic_response(text="Done")
+
+        mock_anthropic_client.messages.create.side_effect = [tool_response, final_response]
+        tools = [{"name": "search_course_content", "input_schema": {}}]
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            generator.generate_response(
+                query="test",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+        # Check second call includes tools
+        second_call = mock_anthropic_client.messages.create.call_args_list[1]
+        assert "tools" in second_call.kwargs
+        assert second_call.kwargs["tools"] == tools
+
+    def test_conversation_preserved_between_rounds(self, mock_anthropic_client, mock_anthropic_response, mock_tool_manager):
+        """Verifies message history accumulates correctly through rounds."""
+        mock_tool_manager.execute_tool.side_effect = [
+            "[Course A] First search results",
+            "[Course B] Second search results"
+        ]
+
+        round1 = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t1", "name": "search_course_content", "input": {"query": "topic A"}}
+        )
+        round2 = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t2", "name": "search_course_content", "input": {"query": "topic B"}}
+        )
+        final = mock_anthropic_response(text="Combined answer")
+
+        mock_anthropic_client.messages.create.side_effect = [round1, round2, final]
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            generator.generate_response(
+                query="Compare A and B",
+                tools=[{"name": "search_course_content"}],
+                tool_manager=mock_tool_manager
+            )
+
+        # Check third call has accumulated messages
+        third_call = mock_anthropic_client.messages.create.call_args_list[2]
+        messages = third_call.kwargs["messages"]
+
+        # Should have: user, assistant(tool_use), user(tool_result), assistant(tool_use), user(tool_result)
+        assert len(messages) == 5
+        assert messages[0]["role"] == "user"
+        assert messages[1]["role"] == "assistant"
+        assert messages[2]["role"] == "user"  # tool_result
+        assert messages[3]["role"] == "assistant"
+        assert messages[4]["role"] == "user"  # tool_result
+
+    def test_tool_execution_error_continues(self, mock_anthropic_client, mock_anthropic_response, mock_tool_manager):
+        """Handles tool execution failures gracefully and continues."""
+        mock_tool_manager.execute_tool.side_effect = Exception("Database connection failed")
+
+        tool_response = mock_anthropic_response(
+            stop_reason="tool_use",
+            tool_use={"id": "t1", "name": "search_course_content", "input": {"query": "test"}}
+        )
+        final_response = mock_anthropic_response(
+            text="I encountered an issue searching the materials."
+        )
+
+        mock_anthropic_client.messages.create.side_effect = [tool_response, final_response]
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+            generator = AIGenerator(api_key="test", model="test")
+            result = generator.generate_response(
+                query="test",
+                tools=[{"name": "search_course_content"}],
+                tool_manager=mock_tool_manager
+            )
+
+        # Check error was passed to Claude in tool_result
+        second_call = mock_anthropic_client.messages.create.call_args_list[1]
+        tool_result_msg = second_call.kwargs["messages"][-1]
+        assert tool_result_msg["role"] == "user"
+        assert "Tool execution failed" in tool_result_msg["content"][0]["content"]
+
+        # Should still get a response
+        assert result == "I encountered an issue searching the materials."
