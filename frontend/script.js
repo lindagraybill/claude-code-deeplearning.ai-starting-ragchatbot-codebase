@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton, themeToggle;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,8 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     newChatButton = document.getElementById('newChatButton');
+    themeToggle = document.getElementById('themeToggle');
 
     setupEventListeners();
+    initializeTheme();
     createNewSession();
     loadCourseStats();
 });
@@ -42,6 +44,93 @@ function setupEventListeners() {
 
     // New chat button
     newChatButton.addEventListener('click', createNewSession);
+
+    // Theme toggle - click and keyboard support
+    themeToggle.addEventListener('click', toggleTheme);
+    themeToggle.addEventListener('keydown', (e) => {
+        // Toggle on Enter or Space key
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleTheme();
+        }
+    });
+}
+
+// Theme Functions
+function initializeTheme() {
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme) {
+        // Use saved preference
+        applyTheme(savedTheme, false);
+    } else {
+        // Detect system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light', false);
+    }
+
+    // Listen for system theme changes (when no saved preference)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+            applyTheme(e.matches ? 'dark' : 'light', true);
+        }
+    });
+
+    // Enable transitions after initial theme is set (prevents flash)
+    requestAnimationFrame(() => {
+        document.documentElement.classList.add('theme-transitions-enabled');
+    });
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    // Add a subtle scale animation to the toggle button
+    if (themeToggle) {
+        themeToggle.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            themeToggle.style.transform = '';
+        }, 150);
+    }
+
+    applyTheme(newTheme, true);
+    localStorage.setItem('theme', newTheme);
+}
+
+function applyTheme(theme, animate = true) {
+    // Temporarily disable transitions for instant theme application on load
+    if (!animate) {
+        document.documentElement.classList.remove('theme-transitions-enabled');
+    }
+
+    if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+
+    // Update aria-label for accessibility
+    if (themeToggle) {
+        const label = theme === 'dark'
+            ? 'Switch to light mode'
+            : 'Switch to dark mode';
+        themeToggle.setAttribute('aria-label', label);
+        themeToggle.setAttribute('title', label);
+    }
+
+    // Re-enable transitions after theme is applied
+    if (!animate) {
+        requestAnimationFrame(() => {
+            document.documentElement.classList.add('theme-transitions-enabled');
+        });
+    }
+}
+
+// Get current theme (useful for other components)
+function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'dark';
 }
 
 
