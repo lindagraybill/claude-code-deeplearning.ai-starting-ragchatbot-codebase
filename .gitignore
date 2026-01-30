@@ -31,4 +31,4 @@ uploads/
 Thumbs.db
 
 # Playwright MCP
-.playwright-mcp/
+.playwright-mcp/.claude/
