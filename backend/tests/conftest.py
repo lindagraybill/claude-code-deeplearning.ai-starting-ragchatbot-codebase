@@ -9,6 +9,145 @@ backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 from vector_store import SearchResults
+from config import Config
+
+
+# ============================================================================
+# Configuration Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_config():
+    """Create a mock Config object for testing."""
+    config = Config()
+    config.MAX_RESULTS = 5
+    config.CHROMA_PATH = "./test_chroma"
+    config.ANTHROPIC_API_KEY = "test-api-key"
+    config.ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
+    config.CHUNK_SIZE = 800
+    config.CHUNK_OVERLAP = 100
+    config.MAX_HISTORY = 2
+    config.EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    return config
+
+
+# ============================================================================
+# RAG System Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_rag_system(mock_vector_store, mock_tool_manager):
+    """Mock RAGSystem for API testing."""
+    rag = MagicMock()
+    rag.vector_store = mock_vector_store
+    rag.tool_manager = mock_tool_manager
+    rag.session_manager = MagicMock()
+    rag.session_manager.create_session.return_value = "test-session-123"
+    rag.query.return_value = (
+        "This is a test response about machine learning.",
+        [{"text": "Introduction to AI - Lesson 1", "link": "https://example.com/lesson/1"}]
+    )
+    rag.get_course_analytics.return_value = {
+        "total_courses": 3,
+        "course_titles": ["Introduction to AI", "Deep Learning", "NLP Fundamentals"]
+    }
+    return rag
+
+
+# ============================================================================
+# API Testing Fixtures
+# ============================================================================
+
+@pytest.fixture
+def test_app(mock_rag_system):
+    """
+    Create a test FastAPI app with mocked RAG system.
+
+    This creates a fresh app without static file mounting to avoid
+    filesystem dependencies in tests.
+    """
+    from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel
+    from typing import List, Optional
+
+    app = FastAPI(title="Test RAG System")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Store the mock rag_system on the app for access
+    app.state.rag_system = mock_rag_system
+
+    class QueryRequest(BaseModel):
+        query: str
+        session_id: Optional[str] = None
+
+    class Source(BaseModel):
+        text: str
+        link: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        answer: str
+        sources: List[Source]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        total_courses: int
+        course_titles: List[str]
+
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        try:
+            session_id = request.session_id
+            if not session_id:
+                session_id = app.state.rag_system.session_manager.create_session()
+
+            answer, sources = app.state.rag_system.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                session_id=session_id
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        try:
+            analytics = app.state.rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/")
+    async def root():
+        return {"status": "ok", "message": "RAG System API"}
+
+    return app
+
+
+@pytest.fixture
+def test_client(test_app):
+    """Create a test client for the FastAPI app."""
+    from httpx import AsyncClient, ASGITransport
+    import asyncio
+
+    async def get_client():
+        transport = ASGITransport(app=test_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+
+    return get_client
 
 
 @pytest.fixture
