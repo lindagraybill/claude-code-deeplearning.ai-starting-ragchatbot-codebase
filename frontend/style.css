@@ -5,23 +5,131 @@
     padding: 0;
 }
 
-/* CSS Variables */
+/* CSS Variables - Dark Theme (default) */
 :root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
+    /* Primary colors */
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-light: #60a5fa;
+
+    /* Background layers (darkest to lightest) */
     --background: #0f172a;
     --surface: #1e293b;
     --surface-hover: #334155;
+    --surface-elevated: #475569;
+
+    /* Text colors - WCAG AA compliant */
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    /* Border colors */
     --border-color: #334155;
+    --border-light: #475569;
+
+    /* Message colors */
     --user-message: #2563eb;
-    --assistant-message: #374151;
+    --user-message-text: #ffffff;
+    --assistant-message: #334155;
+    --assistant-message-text: #f1f5f9;
+
+    /* UI elements */
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
     --radius: 12px;
-    --focus-ring: rgba(37, 99, 235, 0.2);
+    --focus-ring: rgba(59, 130, 246, 0.4);
+
+    /* Special sections */
     --welcome-bg: #1e3a5f;
-    --welcome-border: #2563eb;
+    --welcome-border: #3b82f6;
+
+    /* Code blocks */
+    --code-bg: rgba(0, 0, 0, 0.3);
+    --code-text: #e2e8f0;
+
+    /* Links */
+    --link-color: #60a5fa;
+    --link-hover: #93c5fd;
+
+    /* Status colors */
+    --error-bg: rgba(239, 68, 68, 0.15);
+    --error-border: rgba(239, 68, 68, 0.3);
+    --error-text: #fca5a5;
+    --success-bg: rgba(34, 197, 94, 0.15);
+    --success-border: rgba(34, 197, 94, 0.3);
+    --success-text: #86efac;
+
+    /* Scrollbar */
+    --scrollbar-track: #1e293b;
+    --scrollbar-thumb: #475569;
+    --scrollbar-thumb-hover: #64748b;
+
+    /* Button glow */
+    --button-glow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Light Theme - Enhanced for accessibility (WCAG AA compliant) */
+[data-theme="light"] {
+    /* Primary colors - slightly darker for better contrast on light bg */
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #3b82f6;
+
+    /* Background layers (lightest to darker) */
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --surface-elevated: #e2e8f0;
+
+    /* Text colors - high contrast for accessibility */
+    /* --text-primary: #0f172a provides 15.4:1 contrast ratio on #f8fafc */
+    --text-primary: #0f172a;
+    /* --text-secondary: #475569 provides 7.1:1 contrast ratio on #f8fafc */
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
+    /* Border colors - visible but subtle */
+    --border-color: #cbd5e1;
+    --border-light: #e2e8f0;
+
+    /* Message colors */
+    --user-message: #2563eb;
+    --user-message-text: #ffffff;
+    --assistant-message: #f1f5f9;
+    --assistant-message-text: #1e293b;
+
+    /* UI elements */
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --focus-ring: rgba(37, 99, 235, 0.3);
+
+    /* Special sections */
+    --welcome-bg: #eff6ff;
+    --welcome-border: #3b82f6;
+
+    /* Code blocks - subtle gray background */
+    --code-bg: #f1f5f9;
+    --code-text: #1e293b;
+
+    /* Links - accessible blue */
+    --link-color: #2563eb;
+    --link-hover: #1d4ed8;
+
+    /* Status colors - adjusted for light background */
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-text: #dc2626;
+    --success-bg: #f0fdf4;
+    --success-border: #bbf7d0;
+    --success-text: #16a34a;
+
+    /* Scrollbar */
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
+
+    /* Button glow */
+    --button-glow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 /* Base Styles */
@@ -91,16 +199,16 @@ header h1 {
 }
 
 .sidebar::-webkit-scrollbar-track {
-    background: var(--surface);
+    background: var(--scrollbar-track);
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+    background: var(--scrollbar-thumb-hover);
 }
 
 .sidebar-section {
@@ -134,6 +242,102 @@ header h1 {
 .new-chat-button:focus {
     outline: none;
     color: var(--primary-color);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.sidebar-header .new-chat-button {
+    margin-bottom: 0;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: var(--background);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: rotate(15deg);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    border-color: var(--primary-color);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Icon visibility based on theme */
+.theme-toggle .icon-sun {
+    display: block;
+}
+
+.theme-toggle .icon-moon {
+    display: none;
+}
+
+[data-theme="light"] .theme-toggle .icon-sun {
+    display: none;
+}
+
+[data-theme="light"] .theme-toggle .icon-moon {
+    display: block;
+}
+
+/* Smooth theme transition for all elements - only when enabled */
+/* Prevents flash of wrong theme on initial page load */
+.theme-transitions-enabled body,
+.theme-transitions-enabled .container,
+.theme-transitions-enabled .sidebar,
+.theme-transitions-enabled .chat-main,
+.theme-transitions-enabled .chat-container,
+.theme-transitions-enabled .chat-messages,
+.theme-transitions-enabled .message-content,
+.theme-transitions-enabled .chat-input-container,
+.theme-transitions-enabled #chatInput,
+.theme-transitions-enabled #sendButton,
+.theme-transitions-enabled .stat-item,
+.theme-transitions-enabled .suggested-item,
+.theme-transitions-enabled .theme-toggle,
+.theme-transitions-enabled .new-chat-button,
+.theme-transitions-enabled .sources-content a,
+.theme-transitions-enabled .error-message,
+.theme-transitions-enabled .success-message {
+    transition: background-color 0.3s ease,
+                border-color 0.3s ease,
+                color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+/* Theme toggle button animation */
+.theme-toggle {
+    transition: transform 0.15s ease,
+                background-color 0.3s ease,
+                border-color 0.3s ease,
+                color 0.3s ease;
 }
 
 /* Main Chat Area */
@@ -175,16 +379,16 @@ header h1 {
 }
 
 .chat-messages::-webkit-scrollbar-track {
-    background: var(--surface);
+    background: var(--scrollbar-track);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+    background: var(--scrollbar-thumb-hover);
 }
 
 /* Message Styles */
@@ -221,7 +425,7 @@ header h1 {
 
 .message.user .message-content {
     background: var(--user-message);
-    color: white;
+    color: var(--user-message-text);
     border-bottom-right-radius: 4px;
 }
 
@@ -271,13 +475,13 @@ header h1 {
 }
 
 .sources-content a {
-    color: #5eb5f7;
+    color: var(--link-color);
     text-decoration: underline;
     font-weight: 500;
 }
 
 .sources-content a:hover {
-    color: #8acbff;
+    color: var(--link-hover);
 }
 
 /* Markdown formatting styles */
@@ -312,7 +516,7 @@ header h1 {
 }
 
 .message-content code {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.125rem 0.25rem;
     border-radius: 3px;
     font-family: 'Fira Code', 'Consolas', monospace;
@@ -320,7 +524,7 @@ header h1 {
 }
 
 .message-content pre {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -341,9 +545,9 @@ header h1 {
 
 /* Welcome message special styling */
 .message.welcome-message .message-content {
-    background: var(--surface);
-    border: 2px solid var(--border-color);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    background: var(--welcome-bg);
+    border: 2px solid var(--welcome-border);
+    box-shadow: var(--shadow-lg);
     position: relative;
 }
 
@@ -397,7 +601,7 @@ header h1 {
 #sendButton {
     padding: 0.75rem 1.25rem;
     background: var(--primary-color);
-    color: white;
+    color: var(--user-message-text);
     border: none;
     border-radius: 24px;
     cursor: pointer;
@@ -416,7 +620,7 @@ header h1 {
 #sendButton:hover:not(:disabled) {
     background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: var(--button-glow);
 }
 
 #sendButton:active:not(:disabled) {
@@ -462,21 +666,21 @@ header h1 {
 
 /* Error Message */
 .error-message {
-    background: rgba(239, 68, 68, 0.1);
-    color: #f87171;
+    background: var(--error-bg);
+    color: var(--error-text);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--error-border);
     margin: 0.5rem 0;
 }
 
 /* Success Message */
 .success-message {
-    background: rgba(34, 197, 94, 0.1);
-    color: #4ade80;
+    background: var(--success-bg);
+    color: var(--success-text);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--success-border);
     margin: 0.5rem 0;
 }
 
@@ -687,18 +891,18 @@ details[open] .suggested-header::before {
     .sidebar::-webkit-scrollbar {
         width: 8px;
     }
-    
+
     .sidebar::-webkit-scrollbar-track {
-        background: var(--surface);
+        background: var(--scrollbar-track);
     }
-    
+
     .sidebar::-webkit-scrollbar-thumb {
-        background: var(--border-color);
+        background: var(--scrollbar-thumb);
         border-radius: 4px;
     }
-    
+
     .sidebar::-webkit-scrollbar-thumb:hover {
-        background: var(--text-secondary);
+        background: var(--scrollbar-thumb-hover);
     }
     
     .chat-main {
