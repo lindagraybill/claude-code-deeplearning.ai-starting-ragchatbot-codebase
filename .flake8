@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, W503
+exclude =
+    .git,
+    .venv,
+    __pycache__,
+    chroma_db
+
+# Per-file ignores for test files that need imports after sys.path modification
+# E402: module level import not at top of file (needed for sys.path modification)
+# F401: imported but unused (common in test fixtures)
+# F841: local variable assigned but never used (common in test setup)
+# E501: line too long (relaxed for test assertions and mock data)
+per-file-ignores =
+    backend/tests/*.py: E402, F401, F841, E501
