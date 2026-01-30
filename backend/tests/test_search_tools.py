@@ -3,23 +3,27 @@
 These tests verify the execute method of CourseSearchTool and the
 ToolManager's ability to register and execute tools.
 """
-import pytest
+
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
+
+import pytest
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from search_tools import CourseSearchTool, CourseOutlineTool, ToolManager
+from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
 from vector_store import SearchResults
 
 
 class TestCourseSearchToolExecute:
     """Tests for CourseSearchTool.execute() method."""
 
-    def test_execute_returns_formatted_content(self, mock_vector_store, sample_search_results):
+    def test_execute_returns_formatted_content(
+        self, mock_vector_store, sample_search_results
+    ):
         """execute() should return formatted content with course/lesson headers."""
         mock_vector_store.search.return_value = sample_search_results
 
@@ -28,9 +32,7 @@ class TestCourseSearchToolExecute:
 
         # Verify VectorStore.search was called correctly
         mock_vector_store.search.assert_called_once_with(
-            query="What is machine learning?",
-            course_name=None,
-            lesson_number=None
+            query="What is machine learning?", course_name=None, lesson_number=None
         )
 
         # Verify result contains expected content
@@ -53,9 +55,7 @@ class TestCourseSearchToolExecute:
         tool.execute(query="neural networks", course_name="AI Course")
 
         mock_vector_store.search.assert_called_once_with(
-            query="neural networks",
-            course_name="AI Course",
-            lesson_number=None
+            query="neural networks", course_name="AI Course", lesson_number=None
         )
 
     def test_execute_with_lesson_filter(self, mock_vector_store, sample_search_results):
@@ -66,9 +66,7 @@ class TestCourseSearchToolExecute:
         tool.execute(query="introduction", lesson_number=1)
 
         mock_vector_store.search.assert_called_once_with(
-            query="introduction",
-            course_name=None,
-            lesson_number=1
+            query="introduction", course_name=None, lesson_number=1
         )
 
     def test_execute_with_both_filters(self, mock_vector_store, sample_search_results):
@@ -79,9 +77,7 @@ class TestCourseSearchToolExecute:
         tool.execute(query="deep learning", course_name="ML Course", lesson_number=3)
 
         mock_vector_store.search.assert_called_once_with(
-            query="deep learning",
-            course_name="ML Course",
-            lesson_number=3
+            query="deep learning", course_name="ML Course", lesson_number=3
         )
 
     def test_execute_handles_error_from_vector_store(self, mock_vector_store):
@@ -90,7 +86,7 @@ class TestCourseSearchToolExecute:
             documents=[],
             metadata=[],
             distances=[],
-            error="No course found matching 'NonExistent'"
+            error="No course found matching 'NonExistent'",
         )
         mock_vector_store.search.return_value = error_results
 
@@ -110,7 +106,9 @@ class TestCourseSearchToolExecute:
         assert len(tool.last_sources) == 2
         assert tool.last_sources[0]["text"] == "Introduction to AI - Lesson 1"
 
-    def test_execute_with_empty_results_includes_filter_info(self, mock_vector_store_empty):
+    def test_execute_with_empty_results_includes_filter_info(
+        self, mock_vector_store_empty
+    ):
         """When empty with filters, message includes filter context."""
         tool = CourseSearchTool(mock_vector_store_empty)
         result = tool.execute(query="test", course_name="ML Course", lesson_number=5)
@@ -276,7 +274,9 @@ class TestToolManagerWithEmptyResults:
         manager = ToolManager()
         manager.register_tool(CourseSearchTool(mock_vector_store_empty))
 
-        result = manager.execute_tool("search_course_content", query="What is machine learning?")
+        result = manager.execute_tool(
+            "search_course_content", query="What is machine learning?"
+        )
 
         # This is what happens with MAX_RESULTS=0
         assert "No relevant content found" in result

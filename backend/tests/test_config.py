@@ -4,15 +4,17 @@ These tests verify that configuration settings are valid.
 The test_max_results_should_be_positive test will FAIL with the current code
 because MAX_RESULTS=0 in config.py, which causes all searches to return empty.
 """
-import pytest
+
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
-from config import config, Config
+from config import Config, config
 
 
 class TestConfigValidation:
@@ -39,9 +41,9 @@ class TestConfigValidation:
 
     def test_chunk_size_is_reasonable(self):
         """CHUNK_SIZE should be between 100 and 2000 characters."""
-        assert 100 <= config.CHUNK_SIZE <= 2000, (
-            f"CHUNK_SIZE={config.CHUNK_SIZE} is outside reasonable range [100, 2000]"
-        )
+        assert (
+            100 <= config.CHUNK_SIZE <= 2000
+        ), f"CHUNK_SIZE={config.CHUNK_SIZE} is outside reasonable range [100, 2000]"
 
     def test_chunk_overlap_less_than_chunk_size(self):
         """CHUNK_OVERLAP should be less than CHUNK_SIZE."""
@@ -52,9 +54,9 @@ class TestConfigValidation:
 
     def test_max_history_is_positive(self):
         """MAX_HISTORY should be at least 1 for conversation context."""
-        assert config.MAX_HISTORY >= 1, (
-            f"MAX_HISTORY={config.MAX_HISTORY} should be >= 1"
-        )
+        assert (
+            config.MAX_HISTORY >= 1
+        ), f"MAX_HISTORY={config.MAX_HISTORY} should be >= 1"
 
     def test_anthropic_model_is_set(self):
         """ANTHROPIC_MODEL should be a non-empty string."""
@@ -93,9 +95,9 @@ class TestConfigCreation:
     def test_config_dataclass_creation(self):
         """Config can be instantiated as a dataclass."""
         new_config = Config()
-        assert hasattr(new_config, 'MAX_RESULTS')
-        assert hasattr(new_config, 'CHUNK_SIZE')
-        assert hasattr(new_config, 'ANTHROPIC_API_KEY')
+        assert hasattr(new_config, "MAX_RESULTS")
+        assert hasattr(new_config, "CHUNK_SIZE")
+        assert hasattr(new_config, "ANTHROPIC_API_KEY")
 
     def test_config_values_can_be_overridden(self):
         """Config values can be modified after creation."""

@@ -3,10 +3,12 @@
 These tests verify the full query pipeline through RAGSystem,
 including tool registration, AI generation, and source retrieval.
 """
-import pytest
+
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
+
+import pytest
 
 # Add backend to path
 backend_path = Path(__file__).parent.parent
@@ -26,10 +28,12 @@ class TestRAGSystemInitialization:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager"),
+        ):
 
             system = RAGSystem(config)
 
@@ -45,10 +49,12 @@ class TestRAGSystemInitialization:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager"),
+        ):
 
             system = RAGSystem(config)
 
@@ -63,10 +69,12 @@ class TestRAGSystemInitialization:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager"),
+        ):
 
             RAGSystem(config)
 
@@ -90,10 +98,12 @@ class TestRAGSystemQueryWithZeroMaxResults:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager"),
+        ):
 
             RAGSystem(config)
 
@@ -117,10 +127,12 @@ class TestRAGSystemQuery:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             mock_generator = MagicMock()
             mock_generator.generate_response.return_value = "Test response"
@@ -145,10 +157,12 @@ class TestRAGSystemQuery:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             mock_generator = MagicMock()
             mock_generator.generate_response.return_value = "Here is your answer"
@@ -177,17 +191,21 @@ class TestRAGSystemQuery:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             mock_generator = MagicMock()
             mock_generator.generate_response.return_value = "Follow up answer"
             MockAIGenerator.return_value = mock_generator
 
             mock_session = MagicMock()
-            mock_session.get_conversation_history.return_value = "User: Hi\nAssistant: Hello!"
+            mock_session.get_conversation_history.return_value = (
+                "User: Hi\nAssistant: Hello!"
+            )
             MockSessionManager.return_value = mock_session
 
             system = RAGSystem(config)
@@ -207,10 +225,12 @@ class TestRAGSystemQuery:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             mock_generator = MagicMock()
             mock_generator.generate_response.return_value = "Answer"
@@ -225,9 +245,7 @@ class TestRAGSystemQuery:
 
             # Verify exchange was added
             mock_session.add_exchange.assert_called_once_with(
-                "session-456",
-                "My question",
-                "Answer"
+                "session-456", "My question", "Answer"
             )
 
     def test_query_resets_sources_after_retrieval(self):
@@ -237,10 +255,12 @@ class TestRAGSystemQuery:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             mock_generator = MagicMock()
             mock_generator.generate_response.return_value = "Response"
@@ -273,10 +293,12 @@ class TestRAGSystemQueryFlow:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             # Setup mock vector store
             mock_store = MagicMock()
@@ -285,7 +307,9 @@ class TestRAGSystemQueryFlow:
 
             # Setup mock AI generator that simulates tool use
             mock_generator = MagicMock()
-            mock_generator.generate_response.return_value = "Based on the course content..."
+            mock_generator.generate_response.return_value = (
+                "Based on the course content..."
+            )
             MockAIGenerator.return_value = mock_generator
 
             # Setup mock session manager
@@ -309,10 +333,12 @@ class TestRAGSystemQueryFlow:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager') as MockSessionManager:
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
 
             mock_generator = MagicMock()
             mock_generator.generate_response.return_value = "Response"
@@ -342,15 +368,20 @@ class TestRAGSystemCourseAnalytics:
         config.CHROMA_PATH = "./test_chroma"
         config.ANTHROPIC_API_KEY = "test-key"
 
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.SessionManager"),
+        ):
 
             mock_store = MagicMock()
             mock_store.get_course_count.return_value = 4
             mock_store.get_existing_course_titles.return_value = [
-                "Course A", "Course B", "Course C", "Course D"
+                "Course A",
+                "Course B",
+                "Course C",
+                "Course D",
             ]
             MockVectorStore.return_value = mock_store
 

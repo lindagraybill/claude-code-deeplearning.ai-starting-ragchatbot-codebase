@@ -1,8 +1,10 @@
 """Shared fixtures for RAG chatbot tests."""
-import pytest
+
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add backend to path for imports
 backend_path = Path(__file__).parent.parent
@@ -153,13 +155,15 @@ def test_client(test_app):
 @pytest.fixture
 def mock_search_results():
     """Factory for creating mock SearchResults."""
+
     def _create(documents=None, metadata=None, distances=None, error=None):
         return SearchResults(
             documents=documents or [],
             metadata=metadata or [],
             distances=distances or [],
-            error=error
+            error=error,
         )
+
     return _create
 
 
@@ -169,24 +173,20 @@ def sample_search_results():
     return SearchResults(
         documents=[
             "Machine learning is a subset of AI that enables systems to learn from data.",
-            "Neural networks are computing systems inspired by biological neural networks."
+            "Neural networks are computing systems inspired by biological neural networks.",
         ],
         metadata=[
             {"course_title": "Introduction to AI", "lesson_number": 1},
-            {"course_title": "Introduction to AI", "lesson_number": 2}
+            {"course_title": "Introduction to AI", "lesson_number": 2},
         ],
-        distances=[0.15, 0.25]
+        distances=[0.15, 0.25],
     )
 
 
 @pytest.fixture
 def empty_search_results():
     """Empty SearchResults (simulates MAX_RESULTS=0 bug)."""
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    return SearchResults(documents=[], metadata=[], distances=[])
 
 
 @pytest.fixture
@@ -197,14 +197,16 @@ def mock_vector_store(sample_search_results):
     store.search.return_value = sample_search_results
     store.get_lesson_link.return_value = "https://example.com/lesson/1"
     store._resolve_course_name.return_value = "Introduction to AI"
-    store.get_all_courses_metadata.return_value = [{
-        "title": "Introduction to AI",
-        "course_link": "https://example.com/course",
-        "lessons": [
-            {"lesson_number": 1, "lesson_title": "Getting Started"},
-            {"lesson_number": 2, "lesson_title": "Neural Networks"}
-        ]
-    }]
+    store.get_all_courses_metadata.return_value = [
+        {
+            "title": "Introduction to AI",
+            "course_link": "https://example.com/course",
+            "lessons": [
+                {"lesson_number": 1, "lesson_title": "Getting Started"},
+                {"lesson_number": 2, "lesson_title": "Neural Networks"},
+            ],
+        }
+    ]
     return store
 
 
@@ -227,17 +229,19 @@ def mock_chroma_collection():
             return {"documents": [[]], "metadatas": [[]], "distances": [[]]}
         return {
             "documents": [["Test content 1", "Test content 2"][:n_results]],
-            "metadatas": [[
-                {"course_title": "Test Course", "lesson_number": 1},
-                {"course_title": "Test Course", "lesson_number": 2}
-            ][:n_results]],
-            "distances": [[0.1, 0.2][:n_results]]
+            "metadatas": [
+                [
+                    {"course_title": "Test Course", "lesson_number": 1},
+                    {"course_title": "Test Course", "lesson_number": 2},
+                ][:n_results]
+            ],
+            "distances": [[0.1, 0.2][:n_results]],
         }
 
     collection.query = MagicMock(side_effect=mock_query)
     collection.get.return_value = {
         "ids": ["Test Course"],
-        "metadatas": [{"title": "Test Course", "lessons_json": "[]"}]
+        "metadatas": [{"title": "Test Course", "lessons_json": "[]"}],
     }
     collection.add = MagicMock()
     return collection
@@ -246,6 +250,7 @@ def mock_chroma_collection():
 @pytest.fixture
 def mock_anthropic_response():
     """Factory for creating mock Anthropic API responses."""
+
     def _create(text="Test response", stop_reason="end_turn", tool_use=None):
         response = MagicMock()
         response.stop_reason = stop_reason
@@ -264,6 +269,7 @@ def mock_anthropic_response():
             response.content = [text_block]
 
         return response
+
     return _create
 
 
@@ -280,23 +286,27 @@ def mock_tool_manager():
     """Mock ToolManager for testing AIGenerator."""
     manager = MagicMock()
     manager.execute_tool.return_value = "[Test Course - Lesson 1]\nTest content"
-    manager.get_last_sources.return_value = [{"text": "Test Course - Lesson 1", "link": "https://example.com"}]
-    manager.get_tool_definitions.return_value = [{
-        "name": "search_course_content",
-        "description": "Search course materials",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"}
+    manager.get_last_sources.return_value = [
+        {"text": "Test Course - Lesson 1", "link": "https://example.com"}
+    ]
+    manager.get_tool_definitions.return_value = [
+        {
+            "name": "search_course_content",
+            "description": "Search course materials",
+            "input_schema": {
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
             },
-            "required": ["query"]
         }
-    }]
+    ]
     return manager
 
 
 @pytest.fixture(autouse=True)
 def mock_sentence_transformer():
     """Prevent actual model loading during tests."""
-    with patch('chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction'):
+    with patch(
+        "chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction"
+    ):
         yield
